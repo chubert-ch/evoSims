@@ -32,11 +32,33 @@ public class Positional {
         return new Positional(x - other.x, y - other.y);
     }
 
+    Positional add(final Positional other) {
+        return new Positional(x + other.x, y + other.y);
+    }
+
     static double len(final double x, final double y) {
         return Math.sqrt(x * x + y * y);
     }
 
     double len() {
         return len(x, y);
+    }
+
+    Positional pos() {
+        return new Positional(x, y);
+    }
+
+    Positional mult(final double d) {
+        return new Positional(x * d, y * d);
+    }
+
+    void truncateToArena(final Arena arena) {
+        x = Math.min(arena._arenaWidth, Math.max(0, x));
+        y = Math.min(arena._arenaHeight, Math.max(0, y));
+    }
+
+    @Override
+    public String toString() {
+        return "(" + x + ", " + y + ")";
     }
 }
