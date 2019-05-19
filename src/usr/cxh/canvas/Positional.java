@@ -1,5 +1,6 @@
 package usr.cxh.canvas;
 
+// This class shouldn't exist :(
 public class Positional {
     public int getX() {
         return (int) x;

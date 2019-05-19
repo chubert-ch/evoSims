@@ -35,7 +35,7 @@ public class Blob extends Positional {
     }
 
     Blob(final Blob parent) {
-        this((int) (parent.x + parent.size), (int) (parent.y + parent.size), parent._arena);
+        this((int) (parent.x + parent.size / 2), (int) (parent.y + parent.size / 2), parent._arena);
         speed = evolve(parent.speed);
         size = evolve(parent.size);
         senseRadius = evolve(parent.senseRadius);
@@ -64,7 +64,7 @@ public class Blob extends Positional {
             }
             final List<Blob> toAvoid = new ArrayList<>();
             for (final Blob blob : _arena.blobs) {
-                if (blob.size >= size * 1.2 && blob.dist(this) < blob.size * 1.4) {
+                if (blob.size >= size * 1.2 && blob.dist(this) < blob.size * 1.3) {
                     toAvoid.add(blob);
                 }
             }
