@@ -8,19 +8,21 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import javax.swing.AbstractAction;
+import javax.swing.BoxLayout;
 import javax.swing.JApplet;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.Timer;
@@ -30,6 +32,8 @@ import javax.swing.event.ChangeListener;
 public class Main extends JApplet implements ChangeListener {
     ArenaCanvas _arenaCanvas;
     int arenaWidth = 1200, arenaHeight = 700;
+    final BlobData _blobData = new BlobData();
+
     Arena arena = new Arena(arenaWidth, arenaHeight);
     public static void main(final String[] args) throws Exception {
         final JFrame f = new JFrame("Weather Wizard");
@@ -55,7 +59,7 @@ public class Main extends JApplet implements ChangeListener {
         setLayout(new BorderLayout());
         final JPanel p = new JPanel();
         add("North", p);
-        _arenaCanvas = new ArenaCanvas(arena);
+        _arenaCanvas = new ArenaCanvas(arena, _blobData);
         p.add("Center", _arenaCanvas);
 
         final JPanel p2 = new JPanel();
@@ -69,9 +73,10 @@ public class Main extends JApplet implements ChangeListener {
         final List<BarGraph> graphs = new ArrayList<>();
         graphs.add(new BarGraph(() -> arena.getBlobData(b -> b.size), "size"));
         graphs.add(new BarGraph(() -> arena.getBlobData(b -> b.speed), "speed"));
-        graphs.add( new BarGraph(() -> arena.getBlobData(b -> b.senseRadius), "sense radius"));
-        graphs.add( new BarGraph(() -> arena.getBlobData(b -> b.algae), "algae"));
+        graphs.add(new BarGraph(() -> arena.getBlobData(b -> b.senseRadius), "sense radius"));
+        graphs.add(new BarGraph(() -> arena.getBlobData(b -> b.algae), "algae"));
         graphs.forEach(g -> p2.add(g));
+        p2.add(_blobData);
         add("South", p2);
 
         final ActionListener arenaListener = new AbstractAction() {
@@ -79,6 +84,7 @@ public class Main extends JApplet implements ChangeListener {
             public void actionPerformed(final ActionEvent e) {
                 arena.advanceState();
                 _arenaCanvas.repaint();
+                _blobData.repaint();
             }
         };
         timer = new Timer(100, arenaListener);
@@ -192,61 +198,47 @@ class Food extends Positional {
     }
 }
 
-class BarGraph extends Component {
+class BlobData extends JPanel {
+    public Blob selectedBlob = new Blob(100, 100, null);
+    JLabel blobDataLabel = new JLabel("<html><br><br><br><br><br>");
 
-    private final Supplier<List<Double>> _dataSource;
-    private double lowestEver = 999999, highestEver = 0;
-    private final String _name;
-
-    BarGraph(final Supplier<List<Double>> dataSource, final String name) {
-        _dataSource = dataSource;
-        _name = name;
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-        return new Dimension(200, 100);
+    BlobData() {
+        super();
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        add(blobDataLabel);
+        updateLabels();
     }
 
     @Override
     public void paint(final Graphics g) {
-        final List<Double> data = _dataSource.get();
-        final Dimension actualSize = getSize();
-        data.sort(Double::compareTo);
-        final Graphics2D g2 = (Graphics2D) g;
-        g2.setColor(Color.WHITE);
-        g2.fillRect(0, 0, actualSize.width, actualSize.height);
-        g2.setColor(Color.BLACK);
-        final double currMax = Collections.max(data) + 0.01;
-        highestEver = Math.max(highestEver, currMax);
-        final double currMin = Collections.min(data) - 0.01;
-        lowestEver = Math.min(lowestEver, currMin);
-        final double barInc = (highestEver - lowestEver) / 20;
-        final int barWidth = actualSize.width / 20;
-        final Iterator<Double> it = data.iterator();
-        double currDatum = it.next();
-        int category = 0;
-        for (double currentBar = lowestEver; currentBar < highestEver; currentBar += barInc) {
-            int numInCategory = 0;
-            while (currDatum < currentBar + barInc && currDatum >= currentBar && it.hasNext()) {
-                currDatum = it.next();
-                numInCategory++;
-            }
-            g2.drawRect(category * barWidth, 0, barWidth, numInCategory * 2);
-            category++;
-        }
-        g2.setColor(Color.RED);
-        g2.drawString(String.format("%.2f", lowestEver), 5, 20);
-        g2.drawString(String.format("%.2f", highestEver), actualSize.width - 50, 20);
-        g2.drawString(_name, 5, actualSize.height);
+        updateLabels();
+        super.paint(g);
+    }
+
+    private void updateLabels() {
+        blobDataLabel.setText(convertToMultiline(String.format("Blob speed:         %.2f\n", selectedBlob.speed)
+                + String.format("Blob sense radius:  %.0f\n", selectedBlob.senseRadius)
+                + String.format("Blob algae:         %.2f\n", selectedBlob.algae)
+                + String.format("Blob energy:        %.0f\n", selectedBlob.energy)));
+    }
+
+    public static String convertToMultiline(final String orig) {
+        return "<html>" + orig.replaceAll("\n", "<br>");
+    }
+
+    void trackBlob(final Blob blob) {
+        selectedBlob = blob;
     }
 }
 
-class ArenaCanvas extends Component {
+class ArenaCanvas extends Component implements MouseListener {
     private final Arena _arena;
+    final BlobData _blobData;
 
-    public ArenaCanvas(final Arena arena) {
+    public ArenaCanvas(final Arena arena, final BlobData blobData) {
         _arena = arena;
+        _blobData = blobData;
+        addMouseListener(this);
     }
 
     @Override
@@ -277,7 +269,39 @@ class ArenaCanvas extends Component {
         g2.drawString(_arena.blobs.size() + "", _arena._arenaWidth - 50, _arena._arenaHeight - 20);
         g2.drawString(deadliestBlob.kills + "", (int) deadliestBlob.x - 10, (int) deadliestBlob.y - 10);
         g2.setColor(Color.RED);
-        g2.drawString(String.format("%.0f", deadliestBlob.energy), (int) deadliestBlob.x - 10,
-                (int) deadliestBlob.y + 5);
+        g2.drawString(String.format("%.0f", _blobData.selectedBlob.energy), (int) _blobData.selectedBlob.x - 10,
+                (int) _blobData.selectedBlob.y - 10);
+    }
+
+    @Override
+    public void mouseClicked(final MouseEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void mousePressed(final MouseEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void mouseReleased(final MouseEvent e) {
+        final Point p = e.getPoint();
+        final ArrayList<Blob> blobs = new ArrayList<>(_arena.blobs);
+        blobs.sort((a, b) -> Double.compare(a.dist(p), b.dist(p)));
+        _blobData.trackBlob(blobs.get(0));
+    }
+
+    @Override
+    public void mouseEntered(final MouseEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void mouseExited(final MouseEvent e) {
+        // TODO Auto-generated method stub
+
     }
 }
