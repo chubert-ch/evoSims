@@ -1,5 +1,7 @@
 package usr.cxh.canvas;
 
+import java.awt.Point;
+
 // This class shouldn't exist :(
 public class Positional {
     public int getX() {
@@ -27,6 +29,10 @@ public class Positional {
 
     double dist(final Positional other) {
         return len(other.x - x, other.y - y);
+    }
+
+    public double dist(final Point p) {
+        return len(p.x - x, p.y - y);
     }
 
     Positional sub(final Positional other) {
@@ -62,4 +68,5 @@ public class Positional {
     public String toString() {
         return "(" + x + ", " + y + ")";
     }
+
 }

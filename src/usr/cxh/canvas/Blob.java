@@ -10,6 +10,7 @@ public class Blob extends Positional {
     double energy = 100;
     double size = 10, speed = 1, senseRadius = 100, algae = 10;
     Color _color;
+    Color _secondaryColor;
     private final Arena _arena;
     Strat strat = Strat.ROAM;
     int kills = 0;
@@ -30,7 +31,7 @@ public class Blob extends Positional {
     Blob(final int x, final int y, final Arena arena) {
         super(x, y);
         _arena = arena;
-        _color = getColor();
+        setColors();
         roamTarget = new Positional((x + 500) / 2, (y + 500) / 2);
     }
 
@@ -40,16 +41,18 @@ public class Blob extends Positional {
         size = evolve(parent.size);
         senseRadius = evolve(parent.senseRadius);
         algae = evolve(parent.algae);
-        _color = getColor();
+        setColors();
     }
 
     double evolve(final double d) {
         return d * (1.0 + (Math.random() - 0.5) * 0.2);
     }
 
-    private Color getColor() {
-        return new Color((int) Math.min(255, speed * 50), (int) Math.min(255, algae * 10),
-                Math.min(255, (int) senseRadius));
+    private void setColors() {
+        _color = new Color((int) Math.min(245, speed * 30), (int) Math.min(245, algae * 10),
+                Math.min(245, (int) senseRadius));
+        _secondaryColor = new Color((int) (_color.getRed() * 0.7), (int) (_color.getGreen() * 0.7),
+                (int) (_color.getBlue() * 0.7));
     }
 
     Positional roamTarget;
@@ -58,23 +61,26 @@ public class Blob extends Positional {
         Positional hunt = null;
         switch (strat) {
         case ROAM:
-            if (_arena.food.isEmpty()) {
-                strat = Strat.HOME;
-                return;
-            }
+//            if (_arena.food.isEmpty()) {
+//                strat = Strat.HOME;
+//                return;
+//            }
             final List<Blob> toAvoid = new ArrayList<>();
             for (final Blob blob : _arena.blobs) {
-                if (blob.size >= size * 1.2 && blob.dist(this) < blob.size * 1.3) {
+                if (blob.size >= size * 1.2 && blob.dist(this) < avoidRadius(blob)) {
                     toAvoid.add(blob);
                 }
             }
             final List<Positional> sortedFood = new ArrayList<>(_arena.food);
             for (final Positional food : _arena.food) {
                 for (final Blob blob : toAvoid) {
-                    if (blob.dist(food) < blob.size * 2) {
+                    if (blob.dist(food) < avoidRadius(blob)) {
                         sortedFood.remove(food);
                     }
                 }
+            }
+            if (eConsumption() > 100) {
+                sortedFood.clear();
             }
             for (final Blob blob: _arena.blobs) {
                 if (blob.size * 1.2 < size && (blob.speed * 1.1 <= speed || dist(blob) < size / 2)) {
@@ -107,7 +113,7 @@ public class Blob extends Positional {
             throw new RuntimeException();
         }
 
-        final double factor = Math.min(1, 10 * (speed / (1 + algae)) / mov.len());
+        final double factor = Math.min(1, maxVelocity() / mov.len());
         x += mov.x * factor;
         y += mov.y * factor;
         if (mov.len() <= speed + size / 2) {
@@ -144,11 +150,23 @@ public class Blob extends Positional {
                 return;
             }
         }
-        energy -= speed * speed * size * size * size / 1000;
+        energy -= eConsumption();
         energy += algae; // Slight algae
         if (energy < 0) {
             _arena.blobs.remove(this);
         }
+    }
+
+    private double avoidRadius(final Blob blob) {
+        return blob.size * 0.7 + size * 0.5;
+    }
+
+    public double maxVelocity() {
+        return 10 * (speed / (1 + algae));
+    }
+
+    public double eConsumption() {
+        return speed * speed * size * size * size / 1000 + senseRadius / 1000;
     }
 
     public void reset() {
