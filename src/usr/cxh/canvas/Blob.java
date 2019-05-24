@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gson.Gson;
+
 public class Blob extends Positional {
 
     double food = 0;
@@ -173,5 +175,10 @@ public class Blob extends Positional {
         energy = 100;
         food = 0;
         strat = Strat.ROAM;
+    }
+
+    public String toJson() {
+        Gson gson = new Gson();
+        return gson.toJson(this);
     }
 }
