@@ -22,7 +22,7 @@ public class Arena {
         int totFood = 0;
         int fullFed = 0;
         for (final Blob blob : new ArrayList<>(blobs)) {
-            blob.move();
+            blob.move(this);
             totFood += blob.food;
             fullFed += blob.food == 2 ? 1 : 0;
         }
@@ -45,7 +45,7 @@ public class Arena {
         if (winners.isEmpty()) {
             // Add normal blobs
             for (int i = 0; i < 20; i++) {
-                blobs.add(new Blob(10, 10 + i * 20, this));
+                blobs.add(new Blob(10, 10 + i * 20));
             }
 //            // Add algae blobs
 //            for (int i = 0; i < 4; i++) {
