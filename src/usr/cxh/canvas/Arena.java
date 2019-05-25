@@ -44,10 +44,12 @@ public class Arena {
         food.add(new Food(randInt(0, _arenaWidth), randInt(0, _arenaHeight)));
 
         boolean ser = false;
-        if (blobs.size() >= 400) {
-            if(!ser) {
-                this.toJson("arena.json");
-                ser = true;
+        for (Blob blob : blobs) {
+            if(blob.size < 4) {
+                if(!ser) {
+                    ser = true;
+                    this.toJson("smaller4.json");
+                }
             }
         }
     }
