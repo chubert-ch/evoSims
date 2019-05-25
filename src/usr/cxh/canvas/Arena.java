@@ -6,6 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
+import java.io.IOException;
+import java.io.File;
+import java.io.FileWriter;
+
+
+import com.google.gson.Gson;
 
 public class Arena {
     List<Blob> blobs = new ArrayList<>();
@@ -36,7 +42,16 @@ public class Arena {
             reset();
         }
         food.add(new Food(randInt(0, _arenaWidth), randInt(0, _arenaHeight)));
+
+        boolean ser = false;
+        if (blobs.size() >= 400) {
+            if(!ser) {
+                this.toJson("arena.json");
+                ser = true;
+            }
+        }
     }
+
 
     public void reset() {
         blobs.clear();
@@ -88,5 +103,16 @@ public class Arena {
 
     public List<Double> getBlobData(final Function<Blob, Double> dataGetter) {
         return map(blobs, dataGetter);
+    }
+
+    public void toJson(String file) {
+        Gson gson = new Gson();
+        FileWriter fw = null;
+
+        try {
+            fw = new FileWriter(file);
+            gson.toJson(this, fw);
+            fw.close();
+        } catch(IOException  e) {}
     }
 }
