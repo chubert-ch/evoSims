@@ -6,6 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
+import java.io.IOException;
+import java.io.File;
+import java.io.FileWriter;
+
+
+import com.google.gson.Gson;
 
 public class Arena {
     List<Blob> blobs = new ArrayList<>();
@@ -22,7 +28,7 @@ public class Arena {
         int totFood = 0;
         int fullFed = 0;
         for (final Blob blob : new ArrayList<>(blobs)) {
-            blob.move();
+            blob.move(this);
             totFood += blob.food;
             fullFed += blob.food == 2 ? 1 : 0;
         }
@@ -36,7 +42,18 @@ public class Arena {
             reset();
         }
         food.add(new Food(randInt(0, _arenaWidth), randInt(0, _arenaHeight)));
+
+        boolean ser = false;
+        for (Blob blob : blobs) {
+            if(blob.size < 4) {
+                if(!ser) {
+                    ser = true;
+                    this.toJson("smaller4.json");
+                }
+            }
+        }
     }
+
 
     public void reset() {
         blobs.clear();
@@ -45,7 +62,7 @@ public class Arena {
         if (winners.isEmpty()) {
             // Add normal blobs
             for (int i = 0; i < 20; i++) {
-                blobs.add(new Blob(10, 10 + i * 20, this));
+                blobs.add(new Blob(10, 10 + i * 20));
             }
 //            // Add algae blobs
 //            for (int i = 0; i < 4; i++) {
@@ -88,5 +105,16 @@ public class Arena {
 
     public List<Double> getBlobData(final Function<Blob, Double> dataGetter) {
         return map(blobs, dataGetter);
+    }
+
+    public void toJson(String file) {
+        Gson gson = new Gson();
+        FileWriter fw = null;
+
+        try {
+            fw = new FileWriter(file);
+            gson.toJson(this, fw);
+            fw.close();
+        } catch(IOException  e) {}
     }
 }

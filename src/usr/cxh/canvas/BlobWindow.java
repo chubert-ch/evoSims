@@ -97,7 +97,7 @@ public class BlobWindow extends JApplet implements ChangeListener {
 }
 
 class BlobData extends JPanel {
-    public Blob selectedBlob = new Blob(100, 100, null);
+    public Blob selectedBlob = new Blob(100, 100);
     JLabel blobSpeedLabel = new JLabel();
     JLabel blobSizeLabel = new JLabel();
     JLabel blobSenseLabel = new JLabel();
