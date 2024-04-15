@@ -3,6 +3,7 @@
 It's a simple simulator of blobs that move, evolve and hunt for food. You get remarkable speciation from simple rules:
 
 ![image](https://github.com/chubert-ch/evoSims/assets/14638014/fb54a594-9a30-4de1-bad6-436c5e6cbcc7)
+![image](https://github.com/chubert-ch/evoSims/assets/14638014/2c430e18-acb2-405f-8593-a78ac9b02c36)
 
 ### Details
 
